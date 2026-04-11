@@ -1,0 +1,38 @@
+name: FPL AI Advisor
+
+on:
+  # Runs on a schedule — every day at 10:00 UTC (6pm Malaysia time)
+  schedule:
+    - cron: '0 10 * * *'
+  
+  # Also lets you trigger it manually from GitHub for testing
+  workflow_dispatch:
+
+jobs:
+  run-fpl-agent:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Check out your code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Python
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      # Step 3: Install dependencies
+      - name: Install dependencies
+        run: pip install requests anthropic
+
+      # Step 4: Run the agent
+      - name: Run FPL Agent
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          FPL_MANAGER_ID: ${{ secrets.FPL_MANAGER_ID }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          EMAIL_RECIPIENT: ${{ secrets.EMAIL_RECIPIENT }}
+        run: python3 fpl_agent_v2.py
