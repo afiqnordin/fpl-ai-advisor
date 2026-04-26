@@ -171,3 +171,44 @@ def get_value_picks(max_price: float, position: str):
             "selected_by_percent": float(p['selected_by_percent']),
         })
     return result
+
+def get_fixtures_by_team() -> dict:
+    """
+    Returns fixture difficulty per team as a dict keyed by team name.
+    Used by the scoring model to calculate fixture scores.
+    """
+    data = _get_bootstrap()
+    fixtures = requests.get(f"{FPL_BASE}/fixtures/").json()
+    teams = {t['id']: t['name'] for t in data['teams']}
+
+    events = data['events']
+    current_gw = next((e['id'] for e in events if e['is_current']),
+                      next((e['id'] for e in events if e['is_next']), 1))
+
+    upcoming_gws = [current_gw + 1, current_gw + 2, current_gw + 3]
+    upcoming = [f for f in fixtures if f['event'] in upcoming_gws]
+
+    team_fixtures = {}
+    for f in upcoming:
+        h = teams.get(f['team_h'], 'Unknown')
+        a = teams.get(f['team_a'], 'Unknown')
+
+        if h not in team_fixtures:
+            team_fixtures[h] = []
+        if a not in team_fixtures:
+            team_fixtures[a] = []
+
+        team_fixtures[h].append({
+            "gameweek": f['event'],
+            "opponent": a,
+            "venue": "Home",
+            "difficulty": f['team_h_difficulty']
+        })
+        team_fixtures[a].append({
+            "gameweek": f['event'],
+            "opponent": h,
+            "venue": "Away",
+            "difficulty": f['team_a_difficulty']
+        })
+
+    return team_fixtures
