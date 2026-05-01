@@ -278,13 +278,14 @@ Required JSON structure:
 Key constraints:
 - Budget: £{team_data['budget_remaining']}m in bank
 - Free transfers: {team_data['free_transfers']}
-- A.Ramsey on bench is on loan to Leicester — 0 value, priority out
+- Only recommend transfers for my STARTING XI (multiplier > 0). Ignore bench players entirely — do not recommend transferring out any bench player.
+- My starting XI players are: {', '.join([p['name'] for p in team_data['players'] if p['multiplier'] > 0])}
 
 Instructions:
 1. Check injuries first
 2. Search news for your top 2-3 candidates before recommending
 3. Cross-reference Moneyball scores with fixture data
-4. Give me transfer options ranked by statistical confidence
+4. Give me transfer options ranked by statistical confidence. Give exactly {team_data['free_transfers']} recommendation(s) — one per free transfer — each targeting a different starting XI player.
 5. Flag any blank gameweek risks in my current squad
 6. Respond ONLY with the JSON structure specified. No text outside the JSON."""
 
@@ -300,8 +301,8 @@ Instructions:
         iteration += 1
 
         response = client.messages.create(
-            #model="claude-sonnet-4-6",
-            model="claude-haiku-4-5-20251001",
+            model="claude-sonnet-4-6",
+            #model="claude-haiku-4-5-20251001",
             max_tokens=4096,
             system=system_prompt,
             tools=TOOLS + [{"type": "web_search_20250305", "name": "web_search"}],

@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FPL Agentic Advisor — Architecture</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: #f7f7f5;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+
+  .diagram {
+    background: #ffffff;
+    border: 1px solid #e8e8e4;
+    border-radius: 20px;
+    padding: 48px 52px;
+    width: 860px;
+    box-shadow: 0 2px 24px rgba(0,0,0,0.06);
+  }
+
+  .header {
+    margin-bottom: 44px;
+  }
+
+  .header-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    font-weight: 500;
+    color: #2d7a4f;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    background: #edf7f1;
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 4px;
+    margin-bottom: 10px;
+  }
+
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #1a1a1a;
+    letter-spacing: -0.4px;
+    line-height: 1.2;
+  }
+
+  .header p {
+    font-size: 13px;
+    color: #888;
+    margin-top: 6px;
+    font-weight: 300;
+  }
+
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .row {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .node {
+    flex: 1;
+    border: 1px solid #e8e8e4;
+    border-radius: 12px;
+    padding: 16px 18px;
+    background: #fff;
+    position: relative;
+  }
+
+  .node-icon { font-size: 18px; margin-bottom: 8px; display: block; }
+
+  .node-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: #bbb;
+    margin-bottom: 4px;
+  }
+
+  .node-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a1a1a;
+    margin-bottom: 4px;
+    line-height: 1.3;
+  }
+
+  .node-sub {
+    font-size: 11px;
+    color: #999;
+    font-weight: 300;
+    line-height: 1.5;
+  }
+
+  .node-tag {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #aaa;
+    margin-top: 8px;
+    display: inline-block;
+    border: 1px solid #eee;
+    padding: 2px 6px;
+    border-radius: 3px;
+  }
+
+  .node.trigger  { border-color: #d4e8da; background: #f7fcf9; }
+  .node.data     { border-color: #dce8f5; background: #f6f9fd; }
+  .node.model    { border-color: #e8e0f5; background: #faf8fd; }
+  .node.agent    { border-color: #f5e8d4; background: #fdf9f5; }
+  .node.output   { border-color: #f5d4d4; background: #fdf7f7; }
+  .node.delivery { border-color: #d4dce8; background: #f6f8fc; }
+
+  .node.trigger  .node-label { color: #2d7a4f; }
+  .node.data     .node-label { color: #2a5fa8; }
+  .node.model    .node-label { color: #6b3fa8; }
+  .node.agent    .node-label { color: #a85f2a; }
+  .node.output   .node-label { color: #a82a2a; }
+  .node.delivery .node-label { color: #2a4fa8; }
+
+  .arrow-down {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 32px;
+    position: relative;
+  }
+
+  .arrow-down::before {
+    content: '';
+    position: absolute;
+    width: 1px;
+    height: 20px;
+    background: #d8d8d4;
+    top: 4px;
+  }
+
+  .arrow-down::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    width: 6px;
+    height: 6px;
+    border-right: 1.5px solid #c0c0bc;
+    border-bottom: 1.5px solid #c0c0bc;
+    transform: rotate(45deg);
+  }
+
+  .arrow-label {
+    position: absolute;
+    right: calc(50% - 140px);
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #bbb;
+    letter-spacing: 0.5px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .tools-cluster {
+    display: flex;
+    gap: 8px;
+    margin: 0;
+  }
+
+  .tool-chip {
+    flex: 1;
+    border: 1px solid #ede8da;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fdfbf7;
+    text-align: center;
+  }
+
+  .tool-chip-icon { font-size: 14px; margin-bottom: 4px; display: block; }
+  .tool-chip-name { font-size: 10px; font-weight: 600; color: #555; display: block; margin-bottom: 2px; }
+  .tool-chip-sub  { font-size: 9px; color: #aaa; line-height: 1.4; }
+
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #ccc;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 4px;
+  }
+
+  .footer {
+    margin-top: 36px;
+    padding-top: 20px;
+    border-top: 1px solid #f0f0ec;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .stack-pills { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .pill {
+    font-family: 'DM Mono', monospace;
+    font-size: 9px;
+    color: #888;
+    background: #f4f4f2;
+    border: 1px solid #eee;
+    padding: 3px 8px;
+    border-radius: 20px;
+  }
+
+  .footer-right {
+    font-size: 10px;
+    color: #ccc;
+    font-weight: 300;
+    text-align: right;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="diagram">
+
+  <div class="header">
+    <div class="header-tag">Overview</div>
+    <h1>FPL Agentic Advisor</h1>
+    <p>End-to-end flow of the Autonomous Agent</p>
+  </div>
+
+  <div class="flow">
+
+    <div class="section-label">01 — Trigger</div>
+    <div class="row">
+      <div class="node trigger">
+        <span class="node-icon">⏱</span>
+        <div class="node-label">Scheduler</div>
+        <div class="node-title">GitHub Actions</div>
+        <div class="node-sub">Runs automatically every day · checks if GW deadline is within 48 hours · exits silently if not</div>
+      </div>
+    </div>
+
+    <div class="arrow-down"><div class="arrow-label">deadline within 48h</div></div>
+
+    <div class="section-label">02 — Data</div>
+    <div class="tools-cluster">
+      <div class="tool-chip">
+        <span class="tool-chip-icon">⚽</span>
+        <span class="tool-chip-name">FPL API</span>
+        <span class="tool-chip-sub">Your live squad · budget · injuries · fixtures</span>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-chip-icon">📊</span>
+        <span class="tool-chip-name">Player Data</span>
+        <span class="tool-chip-sub">All 500+ PL players · prices · xG · xA · form · ownership</span>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-chip-icon">🗓</span>
+        <span class="tool-chip-name">Fixtures</span>
+        <span class="tool-chip-sub">Difficulty ratings · next 3 GW · blank gameweek detection</span>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <div class="section-label">03 — Moneyball Scoring Model</div>
+    <div class="row">
+      <div class="node model">
+        <span class="node-icon">🎯</span>
+        <div class="node-label">Data Science Layer</div>
+        <div class="node-title">Weighted Multi-Criteria Scoring</div>
+        <div class="node-sub">Every player scored across 6 dimensions: xG/90 · xA/90 · points per game · fixture ease · price efficiency · bonus rate. Scores normalised and combined into a Moneyball Score (0–100). Low-ownership players get a differential boost — rewarding undervalued assets.</div>
+        <span class="node-tag">scoring_model.py</span>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <div class="section-label">04 — Agentic Reasoning Loop</div>
+    <div class="row">
+      <div class="node agent">
+        <span class="node-icon">🤖</span>
+        <div class="node-label">Claude · Anthropic</div>
+        <div class="node-title">Autonomous Tool-Calling Agent</div>
+        <div class="node-sub">Receives your squad + scored candidates · autonomously decides which tools to call and in what order · reasons iteratively until confident · outputs structured recommendation</div>
+        <span class="node-tag">claude-sonnet-4-6</span>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <div class="section-label">Tools called autonomously by the agent</div>
+    <div class="tools-cluster">
+      <div class="tool-chip">
+        <span class="tool-chip-icon">🏥</span>
+        <span class="tool-chip-name">Injuries</span>
+        <span class="tool-chip-sub">Unavailable · doubtful · suspended players</span>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-chip-icon">📈</span>
+        <span class="tool-chip-name">Player Stats</span>
+        <span class="tool-chip-sub">Deep dive · last 5 GW history · xG trends</span>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-chip-icon">🌐</span>
+        <span class="tool-chip-name">Live Web Search</span>
+        <span class="tool-chip-sub">Real-time news · press conferences · team selection</span>
+      </div>
+      <div class="tool-chip">
+        <span class="tool-chip-icon">💰</span>
+        <span class="tool-chip-name">Value Picks</span>
+        <span class="tool-chip-sub">Budget-constrained candidates by position</span>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <div class="section-label">05 — Output</div>
+    <div class="row">
+      <div class="node output">
+        <span class="node-icon">📋</span>
+        <div class="node-label">Structured Report</div>
+        <div class="node-title">Transfer Recommendations + Visuals</div>
+        <div class="node-sub">Ranked transfers per identified problem · 3 options per problem · Moneyball scores · player comparison charts · fixture difficulty heatmap · live news check · analytical reasoning</div>
+        <span class="node-tag">email_formatter.py · chart_generator.py</span>
+      </div>
+    </div>
+
+    <div class="arrow-down"></div>
+
+    <div class="section-label">06 — Delivery</div>
+    <div class="row">
+      <div class="node delivery">
+        <span class="node-icon">📧</span>
+        <div class="node-label">Automated Delivery</div>
+        <div class="node-title">Email · 48 hours before every deadline</div>
+        <div class="node-sub">Full HTML report with embedded charts sent automatically to inbox · no manual trigger ever needed</div>
+        <span class="node-tag">Gmail SMTP · email_sender.py</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="stack-pills">
+      <span class="pill">Python</span>
+      <span class="pill">Claude API</span>
+      <span class="pill">FPL API</span>
+      <span class="pill">GitHub Actions</span>
+      <span class="pill">Matplotlib</span>
+      <span class="pill">Gmail SMTP</span>
+      <span class="pill">Web Search</span>
+    </div>
+    <div class="footer-right">
+      Afiq Syahmi Nordin<br>
+      github.com/afiqnordin/fpl-ai-advisor
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
