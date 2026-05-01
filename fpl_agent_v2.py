@@ -200,6 +200,7 @@ Your priorities:
 
 The Moneyball Score (0-100) is pre-computed for every player. Trust it.
 
+CRITICAL SQUAD RULE: You can ONLY recommend transferring OUT a player and bringing IN a player of the EXACT SAME POSITION. GK→GK, DEF→DEF, MID→MID, FWD→FWD. Never cross positions.
 CRITICAL: Your ENTIRE response must be ONLY the JSON object. Start your response with { and end with }. No introduction, no explanation, no markdown fences. Just raw JSON.
 Required JSON structure:
 {
@@ -285,7 +286,7 @@ Instructions:
 1. Check injuries first
 2. Search news for your top 2-3 candidates before recommending
 3. Cross-reference Moneyball scores with fixture data
-4. Give me transfer options ranked by statistical confidence. Give exactly {team_data['free_transfers']} recommendation(s) — one per free transfer — each targeting a different starting XI player.
+4. Give me transfer options ranked by statistical confidence. Give exactly {team_data['free_transfers']} recommendation(s) — one per free transfer — each targeting a different starting XI player. ALWAYS match positions exactly — only recommend same-position replacements.
 5. Flag any blank gameweek risks in my current squad
 6. Respond ONLY with the JSON structure specified. No text outside the JSON."""
 
